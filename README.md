@@ -1,98 +1,76 @@
-# LFP Battery Pack Should-Cost Reconstruction
+# LFP Battery Pack Should-Cost Model
 
-A source-traceable reconstruction of Argonne National Laboratory's **2026
-low-cost LFP, 75-kWh BEV pack scenario**, plus a simple component-price
-sensitivity analysis.
+This project breaks down the cost of a 75-kWh LFP battery pack and shows how
+changes in major component prices affect the total cost.
 
-This is a learning project for understanding cost drivers and procurement
-tradeoffs. It is not a supplier quotation, a forecast of an executable market
-price, or a full reimplementation of BatPaC.
+It is based on a specific 2026 battery scenario published by Argonne National
+Laboratory. It is a learning model, not a supplier quote.
 
-## Base case
+## Result
 
-The defined Argonne scenario assumes:
+- My reconstructed pack cost: **$102.08/kWh**
+- Argonne's published result: **$102.20/kWh**
+- Argonne's newer 2025 LFP estimate: **$101.74/kWh**
 
-- LFP cathode and 95% graphite / 5% silicon anode
-- 125-Ah cells and 90-µm electrode thickness
-- 50-GWh/year manufacturing scale
-- 92% cell yield
+The small difference between my model and the source is caused by rounding in
+Argonne's published tables.
 
-The notebook reconstructs a pack cost of **$102.08/kWh**, versus Argonne's
-published **$102.20/kWh**. The $0.12/kWh difference is caused by rounding in
-the published component line items.
+## How it works
 
-## What the model does
+1. Take Argonne's unit price and cost contribution for each major component.
+2. Calculate the implied material quantity:
 
-- Reconstructs material costs using Argonne component prices and published
-  $/kWh contributions
-- Preserves the correct mixed units: $/kg for active materials, $/m² for
-  current collectors and separator, and $/L for electrolyte
-- Reconstructs the full pack stack, including purchased items, BMS,
-  conversion, overhead, R&D, financing, profit, and warranty
-- Tests one-at-a-time ±30% price changes for the three largest selected
-  component drivers
+   `quantity per kWh = cost per kWh ÷ unit price`
 
-## Output
+3. Add the remaining pack costs, including purchased items, manufacturing,
+   overhead, profit, and warranty.
+4. Test how the total changes when selected component prices move up or down
+   by 30%.
+
+For example, Argonne reports an LFP cathode cost of $25.76/kWh and a price of
+$11.50/kg. That implies:
+
+`$25.76/kWh ÷ $11.50/kg = 2.24 kg/kWh`
+
+## Main findings
+
+- Materials account for approximately **$55.58/kWh**, or 54% of pack cost.
+- LFP cathode material is the largest cost driver at **$25.76/kWh**.
+- A 30% change in the LFP cathode price changes total pack cost by approximately
+  **$7.73/kWh**.
+
+## Charts
 
 ![Cost Breakdown](cost_breakdown.png)
 ![Sensitivity Analysis](sensitivity.png)
 
-## Where the inputs come from
+## Sources
 
-The primary source is Argonne National Laboratory,
-[*Cost of Automotive Batteries for Electric Vehicles — Update
-2024*](https://publications.anl.gov/anlpubs/2024/01/187177.pdf), report
-ANL/CSE-24/1:
+The model uses Argonne's
+[*Cost of Automotive Batteries for Electric Vehicles - Update 2024*](https://publications.anl.gov/anlpubs/2024/01/187177.pdf):
 
-| Input | Location in source |
-|---|---|
-| Scenario definition | Table 10 |
-| LFP and anode active-material prices | Table 11 |
-| Electrolyte, separator, additives, binders, solvent, and current-collector prices | Table 12 |
-| Complete 2026 pack-cost stack | Table 27 |
-| Material $/kWh contributions | Table 28 |
+- Tables 10-12: battery design and component prices
+- Tables 27-28: pack and material cost breakdowns
 
-The physical quantities shown in the notebook are **implied quantities**:
+Argonne's September 2025 update provides a newer comparison point of
+**$101.74/kWh** for a similar 75-kWh LFP pack. I use it as a cross-check rather
+than combining its inputs with the 2024 scenario because the cell designs are
+different.
 
-`implied quantity per kWh = published cost contribution per kWh ÷ published unit price`
+[BloombergNEF's 2025 Battery Price Survey](https://about.bnef.com/insights/clean-transport/lithium-ion-battery-pack-prices-fall-to-108-per-kilowatt-hour-despite-rising-metal-prices-bloombergnef/)
+reports global average prices of $81/kWh for LFP packs and $70/kWh for
+stationary-storage packs. These are market prices, while Argonne is a modeled
+U.S. automotive pack cost, so they are useful context but not directly
+comparable.
 
-For example, Argonne reports $25.76/kWh for LFP cathode active material and
-$11.50/kg for its 2026 price. The implied intensity is therefore
-25.76 ÷ 11.50 = **2.24 kg/kWh** for this specific design.
+## Limitations
 
-Carbon and binder remain an aggregate $/kWh line because Table 28 combines
-multiple ingredients with different physical units and prices.
+- The model represents one Argonne battery design, not every LFP battery.
+- It holds the battery design and other costs constant during sensitivity tests.
+- Actual supplier quotes also depend on volume, location, qualification,
+  warranty, capacity, and commercial terms.
 
-## External benchmark
+## Running the notebook
 
-[BloombergNEF's 2025 Battery Price Survey
-release](https://about.bnef.com/insights/clean-transport/lithium-ion-battery-pack-prices-fall-to-108-per-kilowatt-hour-despite-rising-metal-prices-bloombergnef/)
-reports average pack prices of $81/kWh for LFP and $70/kWh for stationary
-storage. Those are observed global market averages, while the Argonne result
-is a modeled U.S. automotive pack scenario, so the figures are context rather
-than a like-for-like validation target.
-
-## Key limitations
-
-- The implied quantities are scenario-specific reconstruction values, not
-  universal LFP material intensities.
-- The sensitivity analysis holds design, yield, capacity, utilization, and all
-  non-selected costs constant.
-- The model does not reproduce BatPaC's electrochemical design calculations or
-  process-level manufacturing model.
-- A supplier quote also reflects qualification, volume commitments, capacity,
-  geography, commercial terms, warranty, and negotiating leverage.
-- The source scenario is automotive; a stationary-storage design could use
-  different cell architecture, duty cycle, pack integration, and warranty
-  assumptions.
-
-## How to run
-
-1. Clone the repository.
-2. Install dependencies: `pip install matplotlib numpy`
-3. Open `model.ipynb` in VS Code or Jupyter.
-4. Run all cells from top to bottom.
-
-## Stack
-
-Python · NumPy · Matplotlib · Jupyter
+Install `matplotlib` and `numpy`, open `model.ipynb`, and run all cells from top
+to bottom.
